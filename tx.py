@@ -63,17 +63,6 @@ class Tx:
         # return an instance of the class (cls(...))
         return cls(version, inputs, outputs, locktime)
 
-    def serialize(self):
-        '''Returns the byte serialization of the transaction'''
-        # serialize version (4 bytes, little endian)
-        # encode_varint on the number of inputs
-        # iterate inputs
-            # serialize each input
-        # encode_varint on the number of inputs
-        # iterate outputs
-            # serialize each output
-        # serialize locktime (4 bytes, little endian)
-        raise NotImplementedError
 
     def fee(self):
         '''Returns the fee of this transaction in satoshi'''
@@ -136,7 +125,6 @@ class TxIn:
         # return an instance of the class (cls(...))
         return cls(prev_tx, prev_index, script_sig, sequence)
 
-    # def serialize(self):
     def serialize(self):
         '''Returns the byte serialization of the transaction input'''
         # serialize prev_tx, little endian
@@ -152,6 +140,7 @@ class TxIn:
         # serialize sequence, 4 bytes, little endian
         result += int_to_little_endian(self.sequence, 4)
         return result
+
 
     @classmethod
     def get_url(cls, testnet=False):
@@ -240,10 +229,14 @@ class TxOut:
     def serialize(self):
         '''Returns the byte serialization of the transaction output'''
         # serialize amount, 8 bytes, little endian
+        result = int_to_little_endian(self.amount, 8)
         # get the scriptPubkey ready (use self.script_pubkey.serialize())
+        raw_script_pubkey = self.script_pubkey.serialize()
         # encode_varint on the length of the scriptPubkey
+        result += encode_varint(len(raw_script_pubkey))
         # add the scriptPubKey
-        raise NotImplementedError
+        result += raw_script_pubkey
+        return result
 
 
 class TxTest(TestCase):

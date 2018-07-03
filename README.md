@@ -1,3 +1,4 @@
+
 # Script [not working]
 
 The ability to lock and unlock coins is at the heart of what it means to transfer Bitcoin.
@@ -20,9 +21,8 @@ The actual unlocking of bitcoin is done in the ScriptSig field and proves owners
 ```
 #### Hint: use the Script.parse method
 
-```python
-# Exercise 1.1
 
+```python
 from script import Script
 
 hex_script = '767695935687'
@@ -31,14 +31,14 @@ hex_script = '767695935687'
 # parse the script
 ```
 
-### Exercise 2
+### Exercise
 
-#### 2.1. Determine what this scriptPubKey is doing:
+#### Determine what this scriptPubKey is doing:
 ```
 6e879169a77ca787
 ```
 
-#### Hint: Use the Script.parse method and look up what various OP codes do here:
+#### Hint: Use the Script.parse method and look up what various OP codes do here: 
 #### https://en.bitcoin.it/wiki/Script
 
 
@@ -53,20 +53,30 @@ hex_script = '6e879169a77ca787'
 # parse the script
 ```
 
-### Test Driven Exercise
+### Transaction Serialization
+
+We’re going to serialize the TxOut object to a bunch of bytes.
+
+Here is the serialize method for `TxOut`
 
 ```python
-import requests
-from io import BytesIO
-from tx import Tx, TxIn, TxOut
-from helper import (
-    encode_varint,
-    int_to_little_endian,
-    little_endian_to_int
-)
+    def serialize(self):
+        '''Returns the byte serialization of the transaction output'''
+        # serialize amount, 8 bytes, little endian
+        result = int_to_little_endian(self.amount, 8)
+        # get the scriptPubkey ready (use self.script_pubkey.serialize())
+        raw_script_pubkey = self.script_pubkey.serialize()
+        # encode_varint on the length of the scriptPubkey
+        result += encode_varint(len(raw_script_pubkey))
+        # add the scriptPubKey
+        result += raw_script_pubkey
+        return result
+```
+The main thing to note here is that the amount is interpreted as little endian. As explained before, little endian is what Satoshi used in most places, including amount.
 
-class TxIn(TxIn):
+Here is the serialize method for `TxIn`:
 
+```python
     def serialize(self):
         '''Returns the byte serialization of the transaction input'''
         # serialize prev_tx, little endian
@@ -82,40 +92,54 @@ class TxIn(TxIn):
         # serialize sequence, 4 bytes, little endian
         result += int_to_little_endian(self.sequence, 4)
         return result
+```
+
+Once again, the previous transaction, previous index and sequence fields are all in little endian. Previous transaction in particular is tricky as the hexadecimal representation is typically what’s used in block explorers. However, block explorers require the transaction id in big endian, as opposed to what’s specified in the transaction.
+
+### Test Driven Exercise
+
+Now let's write the `serialize()` method for the `Tx` object itself.
+
+
+```python
+import requests
+from io import BytesIO
+from tx import Tx
+from helper import (
+    encode_varint,
+    int_to_little_endian,
+    little_endian_to_int
+)
 
 class Tx(Tx):
 
     def serialize(self):
         '''Returns the byte serialization of the transaction'''
         # serialize version (4 bytes, little endian)
-        result = int_to_little_endian(self.version, 4)
         # encode_varint on the number of inputs
-        result += encode_varint(len(self.tx_ins))
         # iterate inputs
-        for tx_in in self.tx_ins:
             # serialize each input
-            result += tx_in.serialize()
-        # encode_varint on the number of inputs
-        result += encode_varint(len(self.tx_outs))
+        # encode_varint on the number of outputs
         # iterate outputs
-        for tx_out in self.tx_outs:
             # serialize each output
-            result += tx_out.serialize()
         # serialize locktime (4 bytes, little endian)
-        result += int_to_little_endian(self.locktime, 4)
-        return result
-
-class TxOut(TxOut):
-
-    def serialize(self):
-        '''Returns the byte serialization of the transaction output'''
-        # serialize amount, 8 bytes, little endian
-        result = int_to_little_endian(self.amount, 8)
-        # get the scriptPubkey ready (use self.script_pubkey.serialize())
-        raw_script_pubkey = self.script_pubkey.serialize()
-        # encode_varint on the length of the scriptPubkey
-        result += encode_varint(len(raw_script_pubkey))
-        # add the scriptPubKey
-        result += raw_script_pubkey
-        return result
+        pass
 ```
+
+
+    ---------------------------------------------------------------------------
+
+    NameError                                 Traceback (most recent call last)
+
+    <ipython-input-1-4131bd894523> in <module>()
+         30         return result
+         31 
+    ---> 32 class TxIn(TxIn):
+         33 
+         34     def serialize(self):
+
+
+    NameError: name 'TxIn' is not defined
+
+
+One thing that might be interesting to note is that the transaction fee is not specified anywhere! This is because it’s an implied amount. It’s the total of the inputs amounts minus the total of the output amounts.
