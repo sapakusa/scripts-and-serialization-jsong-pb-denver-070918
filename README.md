@@ -1,5 +1,5 @@
 
-# Script [not working]
+# SCRIPT and Serialization
 
 The ability to lock and unlock coins is at the heart of what it means to transfer Bitcoin.
 
@@ -15,10 +15,14 @@ What you are required to do as part of a transaction is to assign Bitcoins to a 
 
 The actual unlocking of bitcoin is done in the ScriptSig field and proves ownership of the locked box in order to spend the funds.
 
-#### Exercise: Determine a ScriptSig that will satisfy this scriptPubKey:
+### Try it
+
+Determine a ScriptSig that will satisfy this scriptPubKey:
+
 ```
 767695935687
 ```
+
 #### Hint: use the Script.parse method
 
 
@@ -31,7 +35,7 @@ hex_script = '767695935687'
 # parse the script
 ```
 
-### Exercise
+## Try it
 
 #### Determine what this scriptPubKey is doing:
 ```
@@ -125,21 +129,5 @@ class Tx(Tx):
         # serialize locktime (4 bytes, little endian)
         pass
 ```
-
-
-    ---------------------------------------------------------------------------
-
-    NameError                                 Traceback (most recent call last)
-
-    <ipython-input-1-4131bd894523> in <module>()
-         30         return result
-         31 
-    ---> 32 class TxIn(TxIn):
-         33 
-         34     def serialize(self):
-
-
-    NameError: name 'TxIn' is not defined
-
 
 One thing that might be interesting to note is that the transaction fee is not specified anywhere! This is because it’s an implied amount. It’s the total of the inputs amounts minus the total of the output amounts.
