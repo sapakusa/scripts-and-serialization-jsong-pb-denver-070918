@@ -47,8 +47,6 @@ hex_script = '767695935687'
 
 
 ```python
-# Exercise 2.1
-
 from script import Script
 
 hex_script = '6e879169a77ca787'
